@@ -29,7 +29,7 @@ public class ApplicationDbContext : DbContext
             .WithMany(p => p.Images)
             .HasForeignKey(pi => pi.ProductId);
 
-        // Первоначальные данные (Seed) для курсового проекта
+        // Первоначальные данные 
         modelBuilder.Entity<Category>().HasData(
             new Category { Id = 1, Name = "Платья", Description = "Элегантные платья" },
             new Category { Id = 2, Name = "Блузки", Description = "Стильные блузки" },
@@ -42,7 +42,7 @@ public class ApplicationDbContext : DbContext
             new Product { Id = 3, CategoryId = 3, Name = "Удобные классические брюки", Price = 3900, Description = "Подойдут как для офиса, так и для повседневной носки." }
         );
 
-        // Используем железобетонно работающие ссылки на фото из открытого источника Unsplash/Pexels
+        // Используем ссылки на фото из открытого источника
         modelBuilder.Entity<ProductImage>().HasData(
             new ProductImage { Id = 1, ProductId = 1, Url = "https://images.pexels.com/photos/2065195/pexels-photo-2065195.jpeg?auto=compress&cs=tinysrgb&w=600", IsMain = true },
             new ProductImage { Id = 2, ProductId = 2, Url = "https://images.pexels.com/photos/1485031/pexels-photo-1485031.jpeg?auto=compress&cs=tinysrgb&w=600", IsMain = true },

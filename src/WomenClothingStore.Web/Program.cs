@@ -9,11 +9,11 @@ using WomenClothingStore.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Регистрация DbContext с подавлением строгого предупреждения .NET 9
+// Регистрация DbContext 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=WomenClothingStore.db")
@@ -67,16 +67,7 @@ using (var scope = app.Services.CreateScope())
             context.Database.Migrate();
         }
 
-        // НАПОЛНЕНИЕ ДАННЫМИ (SEED DATA)
-        // Если в проекте Infrastructure у тебя есть класс инициализатора (например, DbInitializer),
-        // вызови его метод здесь. Например:
-        // DbInitializer.Initialize(context);
-        //
-        // ИЛИ можно написать базовую проверку прямо тут:
-        // if (!context.Products.Any()) 
-        // {
-        //     // код добавления категорий и товаров
-        // }
+        
     }
     catch (Exception ex)
     {

@@ -65,7 +65,7 @@
         border-radius: 50%; bottom: -80px; right: -50px;
     }
 
-    /* Анимация только для ОДНОЙ главной кнопки каталога, чтобы манить нажать именно туда */
+    /* Анимация только для главной кнопки каталога */
     .btn-catalog-main {
         transition: transform 0.2s, box-shadow 0.2s;
     }
@@ -74,10 +74,10 @@
         box-shadow: 0 8px 15px rgba(0,0,0,0.15) !important;
     }
 
-    /* Полностью статичные карточки: препод поймет, что это просто список ассортимента */
+    
     .static-category-card {
         background-color: #ffffff;
-        pointer-events: none; /* Отключает любые события мыши, ховеры, клики и выделения */
+        pointer-events: none; 
         user-select: none;
     }
 </style>
