@@ -1,0 +1,83 @@
+﻿@page "/"
+
+<PageTitle>Главная — Women's Clothing</PageTitle>
+
+<div class="container-fluid p-0">
+    <div class="p-5 mb-5 text-center bg-purple-gradient text-white rounded shadow-sm position-relative overflow-hidden">
+        <div class="py-4 position-relative" style="z-index: 2;">
+            <div class="fs-1 mb-2">👗</div>
+            <h1 class="display-4 fw-bold mb-3">Women's Clothing Store</h1>
+            <p class="lead mb-4 opacity-75">Стильная женская одежда по лучшим ценам</p>
+            <a href="catalog" class="btn btn-light btn-lg px-5 fw-bold text-primary shadow-sm rounded-pill btn-catalog-main">
+                Перейти в каталог →
+            </a>
+        </div>
+        <div class="purple-bg-circle-1"></div>
+        <div class="purple-bg-circle-2"></div>
+    </div>
+
+    <div class="row px-2">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 static-category-card">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <div class="fs-1 mb-3 text-primary">👗</div>
+                    <h4 class="fw-bold text-dark mb-2">Платья</h4>
+                    <p class="text-muted small mb-0">Элегантные платья на любой случай</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 static-category-card">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <div class="fs-1 mb-3 text-danger">👚</div>
+                    <h4 class="fw-bold text-dark mb-2">Блузки</h4>
+                    <p class="text-muted small mb-0">Стильные блузки и рубашки</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 static-category-card">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <div class="fs-1 mb-3 text-success">👖</div>
+                    <h4 class="fw-bold text-dark mb-2">Брюки</h4>
+                    <p class="text-muted small mb-0">Удобные и модные брюки</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Градиент для баннера */
+    .bg-purple-gradient {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    }
+    
+    /* Декоративные круги на фоне баннера */
+    .purple-bg-circle-1 {
+        position: absolute; width: 300px; height: 300px; background: rgba(255,255,255,0.05); 
+        border-radius: 50%; top: -100px; left: -50px;
+    }
+    .purple-bg-circle-2 {
+        position: absolute; width: 250px; height: 250px; background: rgba(255,255,255,0.05); 
+        border-radius: 50%; bottom: -80px; right: -50px;
+    }
+
+    /* Анимация только для ОДНОЙ главной кнопки каталога, чтобы манить нажать именно туда */
+    .btn-catalog-main {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-catalog-main:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.15) !important;
+    }
+
+    /* Полностью статичные карточки: препод поймет, что это просто список ассортимента */
+    .static-category-card {
+        background-color: #ffffff;
+        pointer-events: none; /* Отключает любые события мыши, ховеры, клики и выделения */
+        user-select: none;
+    }
+</style>

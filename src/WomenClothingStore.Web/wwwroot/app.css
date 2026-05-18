@@ -1,0 +1,11 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+main {
+    min-height: 80vh;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}

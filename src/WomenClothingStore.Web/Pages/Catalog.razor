@@ -1,0 +1,79 @@
+﻿@page "/catalog"
+@using WomenClothingStore.Domain.Interfaces
+@inject IProductRepository productRepository
+@inject CartService cartService
+@rendermode InteractiveServer
+
+<h3 class="mb-4 fw-bold">🛍️ Каталог товаров</h3>
+
+@if (!string.IsNullOrEmpty(alertMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        🎉 <strong>@alertMessage</strong> успешно добавлен в корзину! 
+        <a href="/cart" class="alert-link">Перейти в корзину →</a>
+    </div>
+}
+
+@if (products == null || !products.Any())
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Загрузка каталога одежды...</p>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var product in products)
+        {
+            var countInCart = cartService.Items.FirstOrDefault(i => i.Product.Id == product.Id)?.Quantity ?? 0;
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0 position-relative">
+                    
+                    @if (countInCart > 0)
+                    {
+                        <span class="position-absolute top-0 end-0 badge bg-success m-3 p-2 fs-6 shadow">
+                            В корзине: @countInCart шт.
+                        </span>
+                    }
+
+                    @if (product.Images != null && product.Images.Any())
+                    {
+                        var mainImg = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.First();
+                        <img src="@mainImg.Url" class="card-img-top" alt="@product.Name" style="height: 300px; object-fit: cover;" />
+                    }
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold">@product.Name</h5>
+                        <p class="card-text text-muted flex-grow-1">@product.Description</p>
+                        
+                        <div class="d-flex align-items-center justify-content-between mt-auto pt-3 border-top">
+                            <span class="fs-5 fw-bold">@product.Price.ToString("N0") ₽</span>
+                            
+                            <button type="button" class="btn btn-primary px-3" @onclick="() => HandleAddToCart(product)">
+                                🛒 В корзину
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IEnumerable<Product> products = new List<Product>();
+    private string alertMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await productRepository.GetProductsWithDetailsAsync();
+    }
+
+    private void HandleAddToCart(Product product)
+    {
+        cartService.AddProduct(product);
+        alertMessage = product.Name;
+    }
+}
