@@ -14,7 +14,7 @@
     </div>
 }
 
-@if (products == null || !products.Any())
+@if (allProducts == null || !allProducts.Any())
 {
     <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
@@ -23,8 +23,21 @@
 }
 else
 {
+  <div class="d-flex gap-2 mb-4">
+        <button type="button" 
+                class="@TshirtsBtnClass" 
+                @onclick="() => SelectCategory(1)">
+            👕 Футболки
+        </button>
+        <button type="button" 
+                class="@SkirtsBtnClass" 
+                @onclick="() => SelectCategory(2)">
+            👗 Юбки
+        </button>
+    </div>
+
     <div class="row">
-        @foreach (var product in products)
+        @foreach (var product in filteredProducts)
         {
             var countInCart = cartService.Items.FirstOrDefault(i => i.Product.Id == product.Id)?.Quantity ?? 0;
 
@@ -63,12 +76,36 @@ else
 }
 
 @code {
-    private IEnumerable<Product> products = new List<Product>();
+    private IEnumerable<Product> allProducts = new List<Product>();
+    private IEnumerable<Product> filteredProducts = new List<Product>();
     private string alertMessage = "";
+    private int selectedCategoryId = 1; 
+
+    // Вычисляемые свойства для классов кнопок (управляют подсветкой)
+    
+    private string TshirtsBtnClass => selectedCategoryId == 1 
+        ? "btn btn-dark px-4 py-2 fw-bold shadow-sm" 
+        : "btn btn-outline-dark px-4 py-2 fw-bold shadow-sm";
+
+    private string SkirtsBtnClass => selectedCategoryId == 2 
+        ? "btn btn-dark px-4 py-2 fw-bold shadow-sm" 
+        : "btn btn-outline-dark px-4 py-2 fw-bold shadow-sm";
 
     protected override async Task OnInitializedAsync()
     {
-        products = await productRepository.GetProductsWithDetailsAsync();
+        allProducts = await productRepository.GetProductsWithDetailsAsync();
+        FilterProducts();
+    }
+
+    private void SelectCategory(int categoryId)
+    {
+        selectedCategoryId = categoryId;
+        FilterProducts();
+    }
+
+    private void FilterProducts()
+    {
+        filteredProducts = allProducts.Where(p => p.CategoryId == selectedCategoryId).ToList();
     }
 
     private void HandleAddToCart(Product product)

@@ -9,7 +9,6 @@ using WomenClothingStore.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -17,7 +16,6 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=WomenClothingStore.db")
-           // Отключаем падение приложения из-за незавершенных изменений в моделях
            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
 // Регистрация репозиториев
@@ -34,7 +32,6 @@ builder.Services.AddScoped<CartService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -46,7 +43,7 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Автоматическое применение миграций при старте в Docker
+// Безопасная инициализация данных базы при старте
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -54,25 +51,31 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
 
-        // Обеспечиваем создание папки для БД, если её нет
         var dbPath = Path.GetDirectoryName(context.Database.GetDbConnection().DataSource);
         if (!string.IsNullOrEmpty(dbPath) && !Directory.Exists(dbPath))
         {
             Directory.CreateDirectory(dbPath);
         }
 
-        // Применяем миграции
-        if (context.Database.IsRelational())
-        {
-            context.Database.Migrate();
-        }
+        // Запуск создания БД, если файла нет
+        context.Database.EnsureCreated();
 
-        
+        // Силовое обновление ссылок в файле .db, чтобы точно отобразились нужные вещи
+        var skirt1 = context.ProductImages.FirstOrDefault(p => p.Id == 4);
+        if (skirt1 != null) skirt1.Url = "https://images.pexels.com/photos/4690501/pexels-photo-4690501.jpeg?auto=compress&cs=tinysrgb&w=600";
+
+        var skirt2 = context.ProductImages.FirstOrDefault(p => p.Id == 5);
+        if (skirt2 != null) skirt2.Url = "https://images.pexels.com/photos/23947043/pexels-photo-23947043.jpeg?auto=compress&cs=tinysrgb&w=600";
+
+        var skirt3 = context.ProductImages.FirstOrDefault(p => p.Id == 6);
+        if (skirt3 != null) skirt3.Url = "https://images.pexels.com/photos/5217676/pexels-photo-5217676.jpeg?auto=compress&cs=tinysrgb&w=600";
+
+        context.SaveChanges();
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ошибка при автоматическом применении миграций базы данных.");
+        logger.LogError(ex, "Ошибка при автоматической инициализации данных базы.");
     }
 }
 

@@ -10,8 +10,8 @@ using WomenClothingStore.Infrastructure.Data;
 namespace WomenClothingStore.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260518114733_InitialProjectSchema")]
-    partial class InitialProjectSchema
+    [Migration("20260520171426_InitialFreshStart")]
+    partial class InitialFreshStart
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,20 +56,14 @@ namespace WomenClothingStore.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Элегантные платья",
-                            Name = "Платья"
+                            Description = "Стильные и базовые футболки на каждый день",
+                            Name = "Футболки"
                         },
                         new
                         {
                             Id = 2,
-                            Description = "Стильные блузки",
-                            Name = "Блузки"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Удобные брюки",
-                            Name = "Брюки"
+                            Description = "Элегантные и модные юбки для любого сезона",
+                            Name = "Юбки"
                         });
                 });
 
@@ -104,25 +98,49 @@ namespace WomenClothingStore.Infrastructure.Migrations
                         {
                             Id = 1,
                             CategoryId = 1,
-                            Description = "Прекрасное вечернее платье для любого случая.",
-                            Name = "Элегантное синее платье",
-                            Price = 4500m
+                            Description = "Классическая хлопковая футболка прямого кроя.",
+                            Name = "Базовая белая футболка",
+                            Price = 1500m
                         },
                         new
                         {
                             Id = 2,
-                            CategoryId = 2,
-                            Description = "Модная блузка из легкого материала.",
-                            Name = "Стильная розовая блузка",
-                            Price = 2800m
+                            CategoryId = 1,
+                            Description = "Трендовая свободная футболка из плотного трикотажа.",
+                            Name = "Футболка оверсайз с принтом",
+                            Price = 2200m
                         },
                         new
                         {
                             Id = 3,
-                            CategoryId = 3,
-                            Description = "Подойдут как для офиса, так и для повседневной носки.",
-                            Name = "Удобные классические брюки",
-                            Price = 3900m
+                            CategoryId = 1,
+                            Description = "Укороченная модель для активного отдыха и тренировок.",
+                            Name = "Спортивная кроп-футболка",
+                            Price = 1800m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CategoryId = 2,
+                            Description = "Легкая плиссированная юбка нежного пастельного оттенка.",
+                            Name = "Юбка-миди плиссе",
+                            Price = 3500m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CategoryId = 2,
+                            Description = "Стильная макси-юбка из плотного денима с эффектным разрезом.",
+                            Name = "Джинсовая юбка с разрезом",
+                            Price = 4200m
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CategoryId = 2,
+                            Description = "Элегантная юбка из эко-кожи для делового или вечернего образа.",
+                            Name = "Кожаная юбка-карандаш",
+                            Price = 4800m
                         });
                 });
 
@@ -154,21 +172,42 @@ namespace WomenClothingStore.Infrastructure.Migrations
                             Id = 1,
                             IsMain = true,
                             ProductId = 1,
-                            Url = "https://images.pexels.com/photos/2065195/pexels-photo-2065195.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            Url = "https://images.pexels.com/photos/1484799/pexels-photo-1484799.jpeg?auto=compress&cs=tinysrgb&w=600"
                         },
                         new
                         {
                             Id = 2,
                             IsMain = true,
                             ProductId = 2,
-                            Url = "https://images.pexels.com/photos/1485031/pexels-photo-1485031.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            Url = "https://images.pexels.com/photos/2294342/pexels-photo-2294342.jpeg?auto=compress&cs=tinysrgb&w=600"
                         },
                         new
                         {
                             Id = 3,
                             IsMain = true,
                             ProductId = 3,
-                            Url = "https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            Url = "https://images.pexels.com/photos/3534523/pexels-photo-3534523.jpeg?auto=compress&cs=tinysrgb&w=600"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            IsMain = true,
+                            ProductId = 4,
+                            Url = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            IsMain = true,
+                            ProductId = 5,
+                            Url = "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=600&q=80"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            IsMain = true,
+                            ProductId = 6,
+                            Url = "https://images.unsplash.com/photo-1509319117193-57bab727e09d?auto=format&fit=crop&w=600&q=80"
                         });
                 });
 
