@@ -1,21 +1,19 @@
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Копируем файлы проектов с учетом папки src
-COPY ["src/WomenClothingStore.Web/WomenClothingStore.Web.csproj", "src/WomenClothingStore.Web/"]
-COPY ["src/WomenClothingStore.Domain/WomenClothingStore.Domain.csproj", "src/WomenClothingStore.Domain/"]
-COPY ["src/WomenClothingStore.Infrastructure/WomenClothingStore.Infrastructure.csproj", "src/WomenClothingStore.Infrastructure/"]
+COPY ["WomenClothingStore.Web/WomenClothingStore.Web.csproj", "WomenClothingStore.Web/"]
+COPY ["WomenClothingStore.Domain/WomenClothingStore.Domain.csproj", "WomenClothingStore.Domain/"]
+COPY ["WomenClothingStore.Infrastructure/WomenClothingStore.Infrastructure.csproj", "WomenClothingStore.Infrastructure/"]
 
-# Восстанавливаем зависимости
-RUN dotnet restore "src/WomenClothingStore.Web/WomenClothingStore.Web.csproj"
+RUN dotnet restore "WomenClothingStore.Web/WomenClothingStore.Web.csproj"
 
-# Копируем все остальные исходники
 COPY . .
-WORKDIR "/src/src/WomenClothingStore.Web"
+
+WORKDIR "/src/WomenClothingStore.Web"
 RUN dotnet build "WomenClothingStore.Web.csproj" -c Release -o /app/build
 
 FROM build AS publish
