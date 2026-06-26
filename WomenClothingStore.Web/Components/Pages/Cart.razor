@@ -1,0 +1,98 @@
+﻿@page "/cart"
+@using WomenClothingStore.Web.Services
+@inject CartService CartService
+@rendermode InteractiveServer
+
+<PageTitle>Корзина — Women's Clothing</PageTitle>
+
+<h3 class="mb-4 fw-bold text-white">🛒 Ваша корзина</h3>
+
+@if (!CartService.Items.Any())
+{
+    <div class="card text-center p-5 shadow-sm border-0 rounded-4">
+        <div class="card-body">
+            <div class="fs-1 mb-3">🛍️</div>
+            <h5 class="fw-bold text-dark">Ваша корзина пуста</h5>
+            <p class="text-muted mb-4">Добавьте товары из каталога.</p>
+            <a href="/catalog" class="btn btn-primary px-5 rounded-pill">Перейти в каталог</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in CartService.Items)
+                    {
+                        <li class="list-group-item p-3">
+                            <div class="row align-items-center g-2">
+                                <div class="col-md-5">
+                                    <h6 class="fw-bold text-dark mb-0">@item.Product.Name</h6>
+                                    @if (!string.IsNullOrEmpty(item.SelectedSize))
+                                    {
+                                        <span class="badge bg-light text-dark border mt-1">Размер: @item.SelectedSize</span>
+                                    }
+                                    <div class="text-muted small mt-1">@item.Product.Price.ToString("N0") ₽ / шт.</div>
+                                </div>
+
+                                <div class="col-md-4 text-center">
+                                    <div class="d-inline-flex align-items-center border rounded-pill bg-white px-2 py-1 shadow-sm">
+                                        <button type="button"
+                                                class="btn btn-sm btn-link text-dark fw-bold text-decoration-none px-2"
+                                                @onclick="() => CartService.DecreaseQuantity(item.Product.Id, item.SelectedSize)">
+                                            −
+                                        </button>
+                                        <span class="px-2 fw-bold text-dark" style="min-width: 40px; text-align: center;">
+                                            @item.Quantity
+                                        </span>
+                                        <button type="button"
+                                                class="btn btn-sm btn-link text-dark fw-bold text-decoration-none px-2"
+                                                @onclick="() => CartService.AddProduct(item.Product, item.SelectedSize)">
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3 text-end">
+                                    <div class="fw-bold text-dark fs-5 mb-1">@item.TotalPrice.ToString("N0") ₽</div>
+                                    <button type="button"
+                                            class="btn btn-sm btn-link text-danger text-decoration-underline p-0"
+                                            @onclick="() => CartService.RemoveProduct(item.Product.Id, item.SelectedSize)">
+                                        Удалить
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <a href="/catalog" class="btn btn-outline-light fw-bold px-4 mt-3 rounded-pill shadow-sm">
+                ← Вернуться в каталог
+            </a>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card p-4 bg-white shadow-sm border-0 rounded-4 text-dark">
+                <h5 class="fw-bold mb-3">📋 Детали заказа</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Позиций:</span>
+                    <span class="fw-bold">@CartService.Items.Count</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Итого единиц:</span>
+                    <span class="fw-bold">@CartService.GetTotalCount() шт.</span>
+                </div>
+                <hr />
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fs-5 text-muted">Итого:</span>
+                    <span class="fs-3 fw-bold text-success">@CartService.GetTotalSum().ToString("N0") ₽</span>
+                </div>
+                <a href="/checkout" class="btn btn-success w-100 mt-4 rounded-pill fw-bold py-2 text-decoration-none">
+                    Оформить заказ
+                </a>
+            </div>
+        </div>
+    </div>
+}

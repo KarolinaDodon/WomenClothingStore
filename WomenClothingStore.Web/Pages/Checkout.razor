@@ -1,0 +1,223 @@
+﻿@page "/checkout"
+@using WomenClothingStore.Domain.Entities
+@using WomenClothingStore.Domain.Interfaces
+@using WomenClothingStore.Web.Services
+@using FluentValidation
+@inject CartService CartService
+@inject IOrderRepository OrderRepository
+@inject IRepository<ProductSize> ProductSizeRepository
+@inject IValidator<Order> OrderValidator
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Оформление заказа — Women's Clothing</PageTitle>
+
+<h3 class="mb-4 fw-bold text-white">📦 Оформление заказа</h3>
+
+@if (orderCompleted)
+{
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
+        <div class="fs-1 mb-3">🎉</div>
+        <h4 class="fw-bold text-dark mb-2">Спасибо за заказ!</h4>
+        <p class="text-muted mb-4">
+            Заказ №@completedOrderId успешно оформлен. Мы свяжемся с вами для подтверждения.
+        </p>
+        <a href="/catalog" class="btn btn-primary px-5 rounded-pill mx-auto" style="width: fit-content;">
+            Вернуться в каталог
+        </a>
+    </div>
+}
+else if (!CartService.Items.Any())
+{
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
+        <div class="fs-1 mb-3">🛍️</div>
+        <h5 class="fw-bold text-dark">Корзина пуста</h5>
+        <p class="text-muted mb-4">Добавьте товары перед оформлением заказа.</p>
+        <a href="/catalog" class="btn btn-primary px-5 rounded-pill mx-auto" style="width: fit-content;">
+            Перейти в каталог
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold text-dark mb-3">📋 Данные для доставки</h5>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Ваше имя *</label>
+                    <input type="text"
+                           class="form-control rounded-3 @(errors.ContainsKey("CustomerName") ? "is-invalid" : "")"
+                           placeholder="Иван Иванов"
+                           @bind="order.CustomerName" @bind:event="oninput" />
+                    @if (errors.ContainsKey("CustomerName"))
+                    {
+                        <div class="invalid-feedback">@errors["CustomerName"]</div>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Телефон *</label>
+                    <input type="text"
+                           class="form-control rounded-3 @(errors.ContainsKey("Phone") ? "is-invalid" : "")"
+                           placeholder="+7 900 123-45-67"
+                           @bind="order.Phone" @bind:event="oninput" />
+                    @if (errors.ContainsKey("Phone"))
+                    {
+                        <div class="invalid-feedback">@errors["Phone"]</div>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Адрес доставки *</label>
+                    <textarea class="form-control rounded-3 @(errors.ContainsKey("Address") ? "is-invalid" : "")"
+                              rows="3"
+                              placeholder="Город, улица, дом, квартира"
+                              @bind="order.Address" @bind:event="oninput">
+                        </textarea>
+                    @if (errors.ContainsKey("Address"))
+                    {
+                        <div class="invalid-feedback">@errors["Address"]</div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(submitError))
+                {
+                    <div class="alert alert-danger rounded-3">@submitError</div>
+                }
+
+                <button type="button"
+                        class="btn btn-success btn-lg w-100 rounded-pill fw-bold mt-2"
+                        disabled="@isSubmitting"
+                        @onclick="SubmitOrder">
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    Подтвердить заказ
+                </button>
+
+                <a href="/cart" class="btn btn-outline-secondary w-100 rounded-pill mt-2">
+                    ← Вернуться в корзину
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold text-dark mb-3">🧾 Ваш заказ</h5>
+
+                @foreach (var item in CartService.Items)
+                {
+                    <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
+                        <div>
+                            <div class="fw-semibold text-dark">@item.Product.Name</div>
+                            <div class="text-muted small">
+                                @if (!string.IsNullOrEmpty(item.SelectedSize))
+                                {
+                                    <span>Размер: @item.SelectedSize · </span>
+                                }
+                                @item.Quantity шт.
+                            </div>
+                        </div>
+                        <div class="fw-bold text-dark">@item.TotalPrice.ToString("N0") ₽</div>
+                    </div>
+                }
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="fs-5 text-muted">Итого:</span>
+                    <span class="fs-3 fw-bold text-success">@CartService.GetTotalSum().ToString("N0") ₽</span>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private Order order = new Order();
+    private Dictionary<string, string> errors = new();
+    private bool isSubmitting = false;
+    private bool orderCompleted = false;
+    private int completedOrderId = 0;
+    private string submitError = string.Empty;
+
+    private async Task SubmitOrder()
+    {
+        submitError = string.Empty;
+
+        var result = await OrderValidator.ValidateAsync(order);
+        errors = result.Errors.ToDictionary(e => e.PropertyName, e => e.ErrorMessage);
+
+        if (!result.IsValid) return;
+
+        isSubmitting = true;
+
+        try
+        {
+            // Проверяем наличие достаточного количества товара перед заказом
+            foreach (var item in CartService.Items)
+            {
+                var ps = item.Product.ProductSizes
+                    .FirstOrDefault(p => p.Size.Label == item.SelectedSize);
+
+                if (ps == null || ps.StockQuantity < item.Quantity)
+                {
+                    submitError = $"Недостаточно товара \"{item.Product.Name}\" (размер {item.SelectedSize}) на складе.";
+                    isSubmitting = false;
+                    return;
+                }
+            }
+
+            order.CreatedAt = DateTime.UtcNow;
+            order.TotalSum = CartService.GetTotalSum();
+
+            foreach (var item in CartService.Items)
+            {
+                order.Items.Add(new OrderItem
+                {
+                    ProductId = item.Product.Id,
+                    SelectedSize = item.SelectedSize,
+                    Quantity = item.Quantity,
+                    PriceAtPurchase = item.Product.Price
+                });
+            }
+
+            await OrderRepository.AddAsync(order);
+
+            // Уменьшаем остатки на складе
+            foreach (var item in CartService.Items)
+            {
+                var sizeId = item.Product.ProductSizes
+                    .First(p => p.Size.Label == item.SelectedSize).SizeId;
+
+                var allProductSizes = await ProductSizeRepository.FindAsync(p =>
+                    p.ProductId == item.Product.Id && p.SizeId == sizeId);
+
+                var psToUpdate = allProductSizes.FirstOrDefault();
+
+                if (psToUpdate != null)
+                {
+                    psToUpdate.StockQuantity -= item.Quantity;
+                    if (psToUpdate.StockQuantity < 0)
+                        psToUpdate.StockQuantity = 0;
+
+                    ProductSizeRepository.Update(psToUpdate);
+                }
+            }
+            await ProductSizeRepository.SaveChangesAsync();
+
+            completedOrderId = order.Id;
+            CartService.ClearCart();
+            orderCompleted = true;
+        }
+        catch (Exception)
+        {
+            submitError = "Произошла ошибка при оформлении заказа. Попробуйте снова.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

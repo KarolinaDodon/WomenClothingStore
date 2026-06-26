@@ -1,0 +1,315 @@
+﻿@page "/product/{Id:int}"
+@using WomenClothingStore.Domain.Entities
+@using WomenClothingStore.Domain.Interfaces
+@using WomenClothingStore.Web.Services
+@using FluentValidation
+@inject IProductRepository ProductRepository
+@inject IReviewRepository ReviewRepository
+@inject CartService CartService
+@inject IValidator<Review> ReviewValidator
+@rendermode InteractiveServer
+
+<PageTitle>@(product?.Name ?? "Товар") — Women's Clothing</PageTitle>
+
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-light" style="width: 3rem; height: 3rem;"></div>
+    </div>
+}
+else if (product == null)
+{
+    <div class="alert alert-danger rounded-4 shadow-sm">
+        Товар не найден. <a href="/catalog" class="alert-link">Вернуться в каталог</a>
+    </div>
+}
+else
+{
+    <div class="mb-3">
+        <a href="/catalog" class="btn btn-outline-light btn-sm rounded-pill">← Назад в каталог</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow rounded-4 overflow-hidden">
+                @if (product.Images.Any())
+                {
+                    var img = product.Images.FirstOrDefault(i => i.IsMain) ?? product.Images.First();
+                    <img src="@img.Url" alt="@product.Name"
+                         style="width: 100%; height: 480px; object-fit: cover;" />
+                }
+                else
+                {
+                    <div class="d-flex align-items-center justify-content-center bg-light" style="height: 480px;">
+                        <span class="fs-1 text-muted">👗</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card border-0 shadow rounded-4 p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge bg-primary rounded-pill px-3 py-2">
+                        @product.Category?.Emoji @product.Category?.Name
+                    </span>
+                    @if (product.Reviews.Any())
+                    {
+                        <div class="d-flex align-items-center gap-1">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                var s = i;
+                                <span class="@(s <= Math.Round(product.AverageRating) ? "text-warning" : "text-muted")" style="font-size: 1.1rem;">★</span>
+                            }
+                            <span class="fw-bold text-dark ms-1">@product.AverageRating</span>
+                            <span class="text-muted small">(@product.Reviews.Count отз.)</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Нет отзывов</span>
+                    }
+                </div>
+
+                <h2 class="fw-bold text-dark mb-1">@product.Name</h2>
+                <p class="text-muted mb-4">@product.Description</p>
+                <div class="fs-2 fw-bold text-dark mb-4">@product.Price.ToString("N0") ₽</div>
+
+                <h6 class="fw-bold text-dark mb-2">
+                    Выберите размер:
+                    @if (!string.IsNullOrEmpty(selectedSize))
+                    {
+                        <span class="badge bg-dark ms-2">@selectedSize</span>
+                    }
+                </h6>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    @foreach (var ps in product.ProductSizes.OrderBy(ps => ps.Size.SortOrder))
+                    {
+                        var isAvailable = ps.StockQuantity > 0;
+                        var isSelected = selectedSize == ps.Size.Label;
+                        <button type="button"
+                                class="btn @(isSelected ? "btn-dark" : isAvailable ? "btn-outline-dark" : "btn-outline-secondary") fw-bold"
+                                style="min-width: 56px; @(!isAvailable ? "text-decoration: line-through; opacity: 0.5;" : "")"
+                                disabled="@(!isAvailable)"
+                                @onclick="() => SelectSize(ps.Size.Label)">
+                            @ps.Size.Label
+                        </button>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(selectedSize))
+                {
+                    var stockQty = product.ProductSizes
+                    .FirstOrDefault(ps => ps.Size.Label == selectedSize)?.StockQuantity ?? 0;
+                    <div class="mb-3">
+                        @if (stockQty > 0)
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill">
+                                ✅ В наличии: @stockQty шт.
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2 rounded-pill">
+                                ❌ Нет в наличии
+                            </span>
+                        }
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(cartAlert))
+                {
+                    <div class="alert alert-success py-2 rounded-3 mb-3">🛒 @cartAlert</div>
+                }
+
+                <div class="d-flex gap-3 mt-auto">
+                    <button type="button"
+                            class="btn btn-primary btn-lg px-5 rounded-pill fw-bold shadow-sm"
+                            disabled="@(string.IsNullOrEmpty(selectedSize))"
+                            @onclick="AddToCart">
+                        🛒 В корзину
+                    </button>
+                    <a href="/catalog" class="btn btn-outline-secondary btn-lg rounded-pill">← Каталог</a>
+                </div>
+
+                @if (string.IsNullOrEmpty(selectedSize))
+                {
+                    <p class="text-muted small mt-2">* Выберите размер для добавления в корзину</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4 class="fw-bold text-white mb-4">
+                💬 Отзывы покупателей
+                @if (product.Reviews.Any())
+                {
+                    <span class="badge bg-white text-primary ms-2">@product.Reviews.Count</span>
+                }
+            </h4>
+        </div>
+
+        <div class="col-lg-7">
+            @if (!product.Reviews.Any())
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-4 text-center text-muted">
+                    <div class="fs-2 mb-2">🗨️</div>
+                    <p class="mb-0">Пока нет отзывов. Будьте первым!</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var review in product.Reviews.OrderByDescending(r => r.CreatedAt))
+                {
+                    <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                                     style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                    @review.AuthorName.Substring(0, 1).ToUpper()
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">@review.AuthorName</div>
+                                    <div class="text-muted small">
+                                        @review.CreatedAt.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("ru-RU"))
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-1">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    var idx = i;
+                                    <span class="@(idx <= review.Rating ? "text-warning" : "text-muted")">★</span>
+                                }
+                            </div>
+                        </div>
+                        <p class="text-dark mb-0">@review.Comment</p>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold text-dark mb-3">✏️ Написать отзыв</h5>
+
+                @if (reviewSubmitted)
+                {
+                    <div class="text-center py-3">
+                        <div class="fs-2 mb-2">🎉</div>
+                        <p class="fw-bold text-success">Спасибо за отзыв!</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                @onclick="() => reviewSubmitted = false">
+                            Написать ещё
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark">Ваше имя *</label>
+                        <input type="text"
+                               class="form-control rounded-3 @(reviewErrors.ContainsKey("AuthorName") ? "is-invalid" : "")"
+                               placeholder="Например: Анна К."
+                               @bind="newReview.AuthorName" @bind:event="oninput" />
+                        @if (reviewErrors.ContainsKey("AuthorName"))
+                        {
+                            <div class="invalid-feedback">@reviewErrors["AuthorName"]</div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark">Оценка *</label>
+                        <div class="d-flex gap-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                var starValue = i;
+                                <button type="button"
+                                        class="btn btn-sm p-0 border-0"
+                                        style="font-size: 1.8rem; color: @(starValue <= newReview.Rating ? "#ffc107" : "#dee2e6");"
+                                        @onclick="() => newReview.Rating = starValue">
+                                    ★
+                                </button>
+                            }
+                        </div>
+                        @if (reviewErrors.ContainsKey("Rating"))
+                        {
+                            <div class="text-danger small mt-1">@reviewErrors["Rating"]</div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark">Отзыв *</label>
+                        <textarea class="form-control rounded-3 @(reviewErrors.ContainsKey("Comment") ? "is-invalid" : "")"
+                                  rows="4"
+                                  placeholder="Расскажите о качестве, посадке, доставке..."
+                                  @bind="newReview.Comment" @bind:event="oninput">
+                                </textarea>
+                        @if (reviewErrors.ContainsKey("Comment"))
+                        {
+                            <div class="invalid-feedback">@reviewErrors["Comment"]</div>
+                        }
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-primary w-100 rounded-pill fw-bold"
+                            @onclick="SubmitReview">
+                        Отправить отзыв
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Product? product;
+    private bool isLoading = true;
+    private string selectedSize = string.Empty;
+    private string cartAlert = string.Empty;
+    private bool reviewSubmitted = false;
+    private Review newReview = new Review { Rating = 5 };
+    private Dictionary<string, string> reviewErrors = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        product = await ProductRepository.GetProductWithFullDetailsAsync(Id);
+        isLoading = false;
+    }
+
+    private void SelectSize(string size)
+    {
+        selectedSize = size;
+        cartAlert = string.Empty;
+    }
+
+    private void AddToCart()
+    {
+        if (product == null || string.IsNullOrEmpty(selectedSize)) return;
+        CartService.AddProduct(product, selectedSize);
+        cartAlert = $"{product.Name} (размер {selectedSize}) добавлен в корзину!";
+    }
+
+    private async Task SubmitReview()
+    {
+        if (product == null) return;
+
+        newReview.ProductId = product.Id;
+        newReview.CreatedAt = DateTime.UtcNow;
+
+        var result = await ReviewValidator.ValidateAsync(newReview);
+        reviewErrors = result.Errors.ToDictionary(e => e.PropertyName, e => e.ErrorMessage);
+
+        if (!result.IsValid) return;
+
+        await ReviewRepository.AddAsync(newReview);
+        product = await ProductRepository.GetProductWithFullDetailsAsync(Id);
+        newReview = new Review { Rating = 5 };
+        reviewErrors = new();
+        reviewSubmitted = true;
+    }
+}
